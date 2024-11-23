@@ -105,3 +105,8 @@ async def list_results() -> List[str]:
         raise HTTPException(
             status_code=500, detail=f"Error retrieving files: {str(e)}"
         )
+
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app)
