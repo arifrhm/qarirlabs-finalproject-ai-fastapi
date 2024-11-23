@@ -11,7 +11,7 @@ class ModelInterface:
         self.model = yolov5.load(model_path)
 
         # Set model parameters
-        self.model.conf = 0.25  # NMS confidence threshold
+        self.model.conf = 0.55  # NMS confidence threshold
         self.model.iou = 0.45  # NMS IoU threshold
         self.model.agnostic = False  # NMS class-agnostic
         self.model.multi_label = False  # NMS multiple labels per box
@@ -38,10 +38,12 @@ class ModelInterface:
 
         return boxes, scores, categories
 
-    def annotate_image(self, image: np.ndarray) -> np.ndarray:
+    def annotate_image(
+            self, image: np.ndarray, min_confidence: float = 55.0
+    ) -> np.ndarray:
         """
-        Annotate the input image with bounding
-        boxes and labels based on predictions.
+        Annotate the input image with bounding boxes and labels for detections
+        with confidence score >= min_confidence.
         """
         # Get predictions
         boxes, scores, categories = self.predict(image)
@@ -51,12 +53,19 @@ class ModelInterface:
 
         # Iterate through detections and draw bounding boxes and labels
         for box, score, category in zip(boxes, scores, categories):
-            x1, y1, x2, y2 = map(int, box)
-            class_name = self.model.names[int(category)]  # Get class name
-            # Calculate confidence as percentage
-            accuracy = round(float(score) * 100, 2)
-            label = f"{class_name}: {accuracy}%"  # Label text
+            accuracy = round(float(score) * 100, 2)  # Confidence as percentage
+            print(
+                f"Score: {accuracy}, Filter Threshold: {min_confidence},"
+                f" Kategori : {self.model.names[int(category)]}"
+            )
+            if accuracy < min_confidence:
+                # Skip detections with confidence below the threshold
+                continue
 
+            x1, y1, x2, y2 = map(int, box)  # Bounding box coordinates
+            class_name = self.model.names[int(category)]  # Get class name
+            label = f"{class_name}: {accuracy}%"  # Label text
+            print("label", label)
             # Draw the bounding box
             cv2.rectangle(img_copy, (x1, y1), (x2, y2), (0, 255, 0), 2)
 

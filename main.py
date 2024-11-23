@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 import cv2
 from pathlib import Path
 from typing import List
+import time  # Import time for generating unique timestamps
 from service.model_interface import ModelInterface
 
 # Initialize FastAPI
@@ -59,8 +60,12 @@ async def upload_image(file: UploadFile = File(...)):
             status_code=500, detail=f"Model inference failed: {str(e)}"
         )
 
+    # Generate unique output filename using timestamp
+    timestamp = int(time.time())  # Current timestamp as integer
+    output_filename = f"detections_{timestamp}_{file.filename}"
+    output_image_path = RESULTS_FOLDER / output_filename
+
     # Save annotated image
-    output_image_path = RESULTS_FOLDER / f"detections_{file.filename}"
     try:
         cv2.imwrite(str(output_image_path), annotated_image)
     except Exception as e:
